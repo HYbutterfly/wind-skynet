@@ -1,5 +1,6 @@
 local skynet = require "skynet"
 local conf = require "conf"
+local wind = require "wind"
 
 skynet.start(function ()
 
@@ -12,6 +13,8 @@ skynet.start(function ()
 	end
 	skynet.newservice("debug_console", 5555)
 
+
+	wind.new("player0", {id = '000000', gold = 1})
 
 	for i=1,conf.nworker do
 		skynet.newservice("worker", i)
