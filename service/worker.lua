@@ -16,21 +16,30 @@ end
 
 
 
-skynet.start(function ()
-	if ID == '1' then
-		local pid = '123'
-		local u = find_or_register(pid)
-		dump(u)
-		wind.new('user@'..pid, u)
+skynet.start(function()
+	skynet.fork(function ()
+		if ID == '1' then
+			local pid = '123'
+			local u = find_or_register(pid)
+			dump(u)
+			wind.new('user@'..pid, u)
 
-	elseif ID == '2' then
-		local u <close> = wind.query('user@123')
-		u.gold = u.gold + 1000
-		dump(u)
+		elseif ID == '2' then
+			local u <close> = wind.query('user@123')
+			u.gold = u.gold + 1000
+			dump(u)
+			skynet.sleep(100)
 
-	elseif ID == '3' then
+		elseif ID == '3' then
+			local u <close> = wind.query('user@123')
+			u.gold = u.gold + 1000
+			dump(u)
+			skynet.sleep(200)
 
-	elseif ID == '4' then
-
-	end
+		elseif ID == '4' then
+			local u <close> = wind.query('user@123')
+			u.gold = u.gold + 1000
+			dump(u)
+		end
+	end)
 end)

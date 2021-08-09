@@ -7,7 +7,7 @@ local waitting = {}
 
 local function try_lock(names)
 	for _,name in ipairs(names) do
-		if locked[name] then
+		if not state[name] or locked[name] then
 			return false
 		end
 	end
@@ -38,7 +38,7 @@ local function try_wakup()
 			index = i
 			if try_lock(names) then
 				table.remove(waitting, i)
-				skynet.wakeup(names, querystates(names))
+				skynet.wakeup(names)
 				done = false
 				break
 			end
