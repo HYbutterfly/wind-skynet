@@ -1,6 +1,5 @@
 local skynet = require "skynet"
 local service = require "skynet.service"
-
 local ltdiff = require "ltdiff"
 
 local state_mgr

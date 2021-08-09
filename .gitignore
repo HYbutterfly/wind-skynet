@@ -2,3 +2,6 @@
 sftp-config.json
 skynet/
 luaclib/
+*.o
+*.so
+conf/mongo.lua

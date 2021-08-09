@@ -14,8 +14,6 @@ skynet.start(function ()
 	skynet.newservice("debug_console", 5555)
 
 
-	wind.new("player0", {id = '000000', gold = 1})
-
 	for i=1,conf.nworker do
 		skynet.newservice("worker", i)
 	end
