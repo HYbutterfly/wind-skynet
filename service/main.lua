@@ -18,5 +18,7 @@ skynet.start(function ()
 		skynet.newservice("worker", i)
 	end
 
+	skynet.newservice("gate")
+
 	skynet.exit()
 end)
