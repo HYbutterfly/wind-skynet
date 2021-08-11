@@ -1,4 +1,5 @@
 local skynet = require "skynet"
+require "skynet.manager"
 local conf = require "conf"
 local wind = require "wind"
 
@@ -14,11 +15,12 @@ skynet.start(function ()
 	skynet.newservice("debug_console", 5555)
 
 
+	local workers = {}
 	for i=1,conf.nworker do
-		skynet.newservice("worker", i)
+		workers[i] = skynet.newservice("worker", i)
 	end
-
-	skynet.newservice("gate")
+	
+	skynet.call(skynet.newservice("gate"), "lua", "init", workers)
 
 	skynet.exit()
 end)

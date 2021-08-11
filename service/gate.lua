@@ -4,7 +4,7 @@ local socket = require "skynet.socket"
 local AUTH_TOKNE <const> = "WIND"
 
 local connection = {}
-
+local workers
 
 
 local function hanshake(id, msg, addr)
@@ -20,7 +20,7 @@ local function hanshake(id, msg, addr)
 
 	socket.write(id, "Login success!\n")
 	socket.abandon(id)
-	skynet.call(agent, "lua", "init", id, addr, pid)
+	skynet.call(agent, "lua", "init", workers, id, addr, pid)
 end
 
 
@@ -43,8 +43,23 @@ local function accept(id, addr)
 end
 
 
+local S = {}
+
+function S.init(...)
+	workers = ...
+end
+
 
 skynet.start(function ()
+	skynet.dispatch("lua", function(session, address, cmd, ...)
+		local f = S[cmd]
+		if f then
+			skynet.ret(skynet.pack(f(...)))
+		else
+			error(string.format("Unknown command %s", tostring(cmd)))
+		end
+	end)
+
 	local id = socket.listen("127.0.0.1", 6666)
 	print("Listen socket :", "127.0.0.1", 6666)
 	socket.start(id , function(id, addr)
