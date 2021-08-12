@@ -5,6 +5,16 @@ local AUTH_TOKNE <const> = "WIND"
 
 local connection = {}
 local workers
+local balance = 0
+
+
+local function worker()
+	balance = balance + 1
+	if balance > #workers then
+		balance = 1
+	end
+	return workers[balance]
+end
 
 
 local function hanshake(id, msg, addr)
@@ -20,7 +30,7 @@ local function hanshake(id, msg, addr)
 
 	socket.write(id, "Login success!\n")
 	socket.abandon(id)
-	skynet.call(agent, "lua", "init", workers, id, addr, pid)
+	skynet.call(agent, "lua", "init", worker(), id, addr, pid)
 end
 
 
@@ -61,9 +71,9 @@ skynet.start(function ()
 	end)
 
 	local id = socket.listen("127.0.0.1", 6666)
-	print("Listen socket :", "127.0.0.1", 6666)
+	skynet.error("Listen socket :", "127.0.0.1", 6666)
 	socket.start(id , function(id, addr)
-		print("connect from " .. addr .. " " .. id)
+		skynet.error("connect from " .. addr .. " " .. id)
 		accept(id, addr)
 	end)
 end)

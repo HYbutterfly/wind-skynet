@@ -5,17 +5,7 @@ local json = require "json"
 local conf = require "conf"
 
 local p = {}
-local balance, workers
-
-
-local function worker()
-	balance = balance + 1
-	if balance == #workers + 1 then
-		balance = 1
-	end
-	return workers[balance]
-end
-
+local worker
 
 
 local function decode(pack)
@@ -38,7 +28,6 @@ local S = {}
 
 
 local function start_socket(id)
-	skynet.error("start socket", id)
 	socket.start(id)
 	while true do
 		local s = socket.read(id, 2)
@@ -52,7 +41,7 @@ local function start_socket(id)
 		end
 		local ok, name, params, response = pcall(decode, pack)
 		if ok then
-			local r = skynet.call(worker(), "lua", "player_request", p.id, name, params)
+			local r = skynet.call(worker, "lua", "player_request", p.id, name, params)
 			if response then
 				socket.write(id, response(r))
 			end
@@ -65,16 +54,14 @@ local function start_socket(id)
 end
 
 
-function S.init(_workers, id, addr, pid)
-	workers = _workers
-	balance = math.random(0, #workers-1)
+function S.init(_worker, id, addr, pid)
+	worker = _worker
 
 	p.sock = id
 	p.id = pid
 	p.addr = addr
 
-	skynet.call(worker(), "lua", "player_login", pid, addr)
-
+	skynet.call(worker, "lua", "player_login", pid, addr)
 	skynet.fork(function ()
 		start_socket(id)
 	end)
