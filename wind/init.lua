@@ -42,6 +42,12 @@ function wind.release(name)
 end
 
 
+
+function wind.slice(name)
+	return skynet.call(state_mgr, "lua", "slice", name)
+end
+
+
 function wind.query(...)
 	local names = {...}
 	local addrs = skynet.call(state_mgr, "lua", "lock", names)

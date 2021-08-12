@@ -79,6 +79,14 @@ function S.releasestate(name)
 end
 
 
+function S.slice(name)
+	local addr = state[name]
+	if addr then
+		return skynet.call(addr, "lua", "slice", name)
+	end
+end
+
+
 function S.lock(names)
 	if try_lock(names) then
 		return querystates(names)

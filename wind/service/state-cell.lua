@@ -73,6 +73,11 @@ function S.patch(diff)
 end
 
 
+function S.slice()
+	return t
+end
+
+
 function S.query(v)
 	v = v or 0
 
