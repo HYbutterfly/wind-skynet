@@ -26,23 +26,32 @@ local function service_db(...)
 end
 
 
+local service_cache = {}
 
-local cache = {}
+local function query(name)
+	if not service_cache[name] then
+		service_cache[name] = service.new(name, service_db)
+	end
+	return service_cache[name]
+end
+
+
+local db_cache = {}
 
 local function db(name)
-	local c = cache[name]
+	local c = db_cache[name]
 	if not c then
 		local service_name = "kvdb."..name
 		c = setmetatable({}, {
 				__index = function (_, k)
-					return skynet.call(service.new(service_name, service_db), "lua", "get", k)
+					return skynet.call(query(service_name), "lua", "get", k)
 				end,
 				__newindex = function(_, k, v)
-					return skynet.call(service.new(service_name, service_db), "lua", "set", k, v)
+					return skynet.call(query(service_name), "lua", "set", k, v)
 				end
 			}
 		)
-		cache[name] = c
+		db_cache[name] = c
 	end
 
 	return c
