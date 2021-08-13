@@ -38,7 +38,7 @@ local last = ""
 
 local fd = assert(socket.connect("127.0.0.1", 6666))
 socket.send(fd, "WIND\n") 		-- auth token
-socket.send(fd, "123456\n") 	-- handshake, use `pid` to login
+socket.send(fd, '{"cmd":"login", "pid":"123456"}\n') 	-- handshake, use `pid` to login
 
 
 local session = 0

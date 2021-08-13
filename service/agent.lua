@@ -54,6 +54,18 @@ local function start_socket(id)
 end
 
 
+function S.reconnect(id)
+	-- body
+end
+
+
+-- client re-login or new client(device) login
+function S.login(id, addr)
+	-- body
+end
+
+
+-- real login in server (client first login)
 function S.init(_worker, id, addr, pid)
 	worker = _worker
 
@@ -62,6 +74,7 @@ function S.init(_worker, id, addr, pid)
 	p.addr = addr
 
 	skynet.call(worker, "lua", "player_login", pid, addr)
+
 	skynet.fork(function ()
 		start_socket(id)
 	end)

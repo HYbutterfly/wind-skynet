@@ -1,9 +1,10 @@
 local skynet = require "skynet"
 local socket = require "skynet.socket"
+local json = require "json"
 
 local AUTH_TOKNE <const> = "WIND"
 
-local connection = {}
+local logged = {} 			-- pid : agent
 local workers
 local balance = 0
 
@@ -16,21 +17,43 @@ local function worker()
 	return workers[balance]
 end
 
+local function token_encode(pid)
+	return pid
+end
 
+local function token_decode(t)
+	local pid = t
+	return pid
+end
+
+--[[
+	msg: {"cmd": "login", "pid": "123456"}
+	msg: {"cmd": "reconnect", "token": "TOKEN", "msgindex": 10}
+]]
 local function hanshake(id, msg, addr)
-	local pid = msg
-	local agent = skynet.newservice "agent"
+	local msg = json.decode(msg)
 
-	connection[id] = {
-		id = id,
-		pid = pid,
-		addr = addr,
-		agent = agent
-	}
+	if msg.cmd == "login" then
+		local pid = assert(msg.pid)
+		local token = token_encode(pid)
+		socket.write(id, "Login success!" .. token .."\n")
+		socket.abandon(id)
 
-	socket.write(id, "Login success!\n")
-	socket.abandon(id)
-	skynet.call(agent, "lua", "init", worker(), id, addr, pid)
+		local agent = logged[pid]
+		
+		if agent then
+			-- client re-login or new client(device) login
+			skynet.call(agent, "lua", "login", id, addr)
+		else
+			-- real logic login in server
+			agent = skynet.newservice "agent"
+			logged[pid] = agent
+			skynet.call(agent, "lua", "init", worker(), id, addr, pid)
+		end
+	else
+		assert(msg.cmd == "reconnect")
+
+	end
 end
 
 
