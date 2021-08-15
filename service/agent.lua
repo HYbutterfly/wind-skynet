@@ -3,6 +3,7 @@ local socket = require "skynet.socket"
 local db = require "wind.mongo"
 local json = require "json"
 local conf = require "conf"
+local token = require "wind.token"
 
 local p = {}
 local worker
@@ -55,13 +56,13 @@ end
 
 
 function S.reconnect(id)
-	-- body
+	socket.write(id, "200 OK\n")
 end
 
 
 -- client re-login or new client(device) login
-function S.login(id, addr)
-	-- body
+function S.login(id)
+	socket.write(id, string.format("200 OK, %s\n", token.encode(p.id, skynet.self())))
 end
 
 
@@ -74,6 +75,7 @@ function S.init(_worker, id, addr, pid)
 	p.addr = addr
 
 	skynet.call(worker, "lua", "player_login", pid, addr)
+	socket.write(id, string.format("200 OK, %s\n", token.encode(p.id, skynet.self())))
 
 	skynet.fork(function ()
 		start_socket(id)

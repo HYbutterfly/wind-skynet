@@ -1,6 +1,7 @@
 local skynet = require "skynet"
 local socket = require "skynet.socket"
 local json = require "json"
+local token = require "wind.token"
 
 local AUTH_TOKNE <const> = "WIND"
 
@@ -17,13 +18,16 @@ local function worker()
 	return workers[balance]
 end
 
-local function token_encode(pid)
-	return pid
-end
 
-local function token_decode(t)
-	local pid = t
-	return pid
+
+local function token_auth(t)
+	assert(t)
+	local pid, agent = token.decode(t)
+	if agent then
+		agent = tonumber(agent)
+		assert(agent == logged[pid])
+		return agent
+	end
 end
 
 --[[
@@ -35,24 +39,21 @@ local function hanshake(id, msg, addr)
 
 	if msg.cmd == "login" then
 		local pid = assert(msg.pid)
-		local token = token_encode(pid)
-		socket.write(id, "Login success!" .. token .."\n")
-		socket.abandon(id)
-
 		local agent = logged[pid]
-		
+
 		if agent then
 			-- client re-login or new client(device) login
-			skynet.call(agent, "lua", "login", id, addr)
+			skynet.send(agent, "lua", "login", id)
 		else
 			-- real logic login in server
 			agent = skynet.newservice "agent"
 			logged[pid] = agent
-			skynet.call(agent, "lua", "init", worker(), id, addr, pid)
+			skynet.send(agent, "lua", "init", worker(), id, addr, pid)
 		end
 	else
 		assert(msg.cmd == "reconnect")
-
+		local agent = assert(token_auth(msg.token))
+		skynet.send(agent, "lua", "reconnect", id)
 	end
 end
 
@@ -60,12 +61,13 @@ end
 local function accept(id, addr)
 	skynet.fork(function()
 		socket.start(id)
+		socket.limit(fd, 1024)
 		local token = socket.readline(id)
 		if token == AUTH_TOKNE then
 			local msg = socket.readline(id)
-			local ok = msg and hanshake(id, msg, addr)
+			local ok = msg and pcall(hanshake, id, msg, addr)
 			if ok then
-				-- pass
+				socket.abandon(id)
 			else
 				socket.close(id)
 			end
