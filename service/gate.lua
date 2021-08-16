@@ -61,7 +61,7 @@ end
 local function accept(id, addr)
 	skynet.fork(function()
 		socket.start(id)
-		socket.limit(fd, 1024)
+		socket.limit(id, 1024)
 		local token = socket.readline(id)
 		if token == AUTH_TOKNE then
 			local msg = socket.readline(id)

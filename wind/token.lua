@@ -14,7 +14,7 @@ end
 function token.decode(t)
 	local pid, agent = t:match("([^@]*)@(.+)")
 	if agent then
-		return b64decode(pid), b64decode(agent)
+		return b64decode(pid), math.tointeger(b64decode(agent))
 	end
 end
 

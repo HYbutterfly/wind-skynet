@@ -29,7 +29,6 @@ local S = {}
 
 
 local function start_socket(id)
-	socket.start(id)
 	while true do
 		local s = socket.read(id, 2)
 		if s == false then
@@ -38,6 +37,11 @@ local function start_socket(id)
 		local sz = s:byte(1)*256 + s:byte(2)
 		local pack = socket.read(id, sz)
 		if pack == false then
+			break
+		end
+
+		if id ~= p.sock then
+			skynet.error("agent alreay use new socket id, this pack will been ignore")
 			break
 		end
 		local ok, name, params, response = pcall(decode, pack)
@@ -56,13 +60,23 @@ end
 
 
 function S.reconnect(id)
+	socket.close(p.sock)
+	p.sock = id
+
+	socket.start(id)
 	socket.write(id, "200 OK\n")
+	skynet.fork(start_socket, id)
 end
 
 
 -- client re-login or new client(device) login
 function S.login(id)
+	socket.close(p.sock)
+	p.sock = id
+
+	socket.start(id)
 	socket.write(id, string.format("200 OK, %s\n", token.encode(p.id, skynet.self())))
+	skynet.fork(start_socket, id)
 end
 
 
@@ -75,11 +89,10 @@ function S.init(_worker, id, addr, pid)
 	p.addr = addr
 
 	skynet.call(worker, "lua", "player_login", pid, addr)
-	socket.write(id, string.format("200 OK, %s\n", token.encode(p.id, skynet.self())))
 
-	skynet.fork(function ()
-		start_socket(id)
-	end)
+	socket.start(id)
+	socket.write(id, string.format("200 OK, %s\n", token.encode(p.id, skynet.self())))
+	skynet.fork(start_socket, id)
 end
 
 

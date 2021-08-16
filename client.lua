@@ -79,6 +79,9 @@ local function dispatch_message()
 			print(r)
 		end
 	end
+	if r == "" then
+		error "Server closed"
+	end
 end
 
 ----------------------------------------------------------------------------------
