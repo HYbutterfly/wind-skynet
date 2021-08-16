@@ -54,8 +54,12 @@ local function start_socket(id)
 			skynet.error(string.format("agent decode error, pack: %s, err:%s", pack, name))
 		end
 	end
+	
 	socket.close(id)
 	skynet.error("socket closed", id)
+	if id == p.sock then
+		skynet.error("socket closed by client, you can do something here")
+	end
 end
 
 
