@@ -16,6 +16,11 @@ local function send_pack(pack)
 	local pack = string.pack(">s2", pack..string.pack(">I4", packidx))
 	pack_list[packidx] = pack
 
+	-- cache up to 128 packages
+	if packidx > 128 then
+		pack_list[packidx-128] = nil
+	end 
+
 	if p.sock then
 		socket.write(p.sock, pack)
 	end
@@ -87,8 +92,9 @@ end
 function S.reconnect(id, idx)
 	socket.start(id)
 
-	if idx > packidx then
+	if idx > packidx or (packidx > idx and not pack_list[idx+1]) then
 		skynet.error("invalid idx", idx, packidx)
+		socket.write(id, "401 Pack Index Invalid\n")
 		socket.close(id)
 		return
 	end
