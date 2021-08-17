@@ -5,8 +5,25 @@ local json = require "json"
 local conf = require "conf"
 local token = require "wind.token"
 
-local p = {}
 local worker
+local p = {}
+local packidx = 0
+local pack_list = {}
+
+
+local function send_pack(pack)
+	packidx = packidx + 1
+	local pack = string.pack(">s2", pack..string.pack(">I4", packidx))
+	pack_list[packidx] = pack
+
+	if p.sock then
+		socket.write(p.sock, pack)
+	end
+end
+
+local function send_request(name, args)
+	send_pack(json.encode{0, name, args})
+end
 
 
 local function decode(pack)
@@ -16,8 +33,7 @@ local function decode(pack)
 	local params = t[3]
 
 	local function response(result)
-		local s = json.encode{session, result}
-		return string.pack(">s2", s)
+		return json.encode{session, result}
 	end
 
 	return name, params, response
@@ -48,7 +64,7 @@ local function start_socket(id)
 		if ok then
 			local r = skynet.call(worker, "lua", "player_request", p.id, name, params)
 			if response then
-				socket.write(id, response(r))
+				send_pack(response(r))
 			end
 		else
 			skynet.error(string.format("agent decode error, pack: %s, err:%s", pack, name))
@@ -58,17 +74,34 @@ local function start_socket(id)
 	socket.close(id)
 	skynet.error("socket closed", id)
 	if id == p.sock then
-		skynet.error("socket closed by client, you can do something here")
+		p.sock = nil
 	end
 end
 
 
-function S.reconnect(id)
+function S.send2client(name, args)
+	send_request(name, args)
+end
+
+
+function S.reconnect(id, idx)
+	socket.start(id)
+
+	if idx > packidx then
+		skynet.error("invalid idx", idx, packidx)
+		socket.close(id)
+		return
+	end
+
 	socket.close(p.sock)
 	p.sock = id
-
-	socket.start(id)
 	socket.write(id, "200 OK\n")
+
+	-- re-send packages
+	for i=idx+1,packidx do
+		print("send", i)
+		socket.write(id, pack_list[i])
+	end
 	skynet.fork(start_socket, id)
 end
 
@@ -97,6 +130,13 @@ function S.init(_worker, id, addr, pid)
 	socket.start(id)
 	socket.write(id, string.format("200 OK, %s\n", token.encode(p.id, skynet.self())))
 	skynet.fork(start_socket, id)
+
+	skynet.fork(function ()
+		while true do
+			skynet.sleep(500)
+			send_request "heartbeat"
+		end
+	end)
 end
 
 

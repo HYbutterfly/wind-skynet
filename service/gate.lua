@@ -32,9 +32,10 @@ end
 
 --[[
 	msg: {"cmd": "login", "pid": "123456"}
-	msg: {"cmd": "reconnect", "token": "TOKEN", "msgindex": 10}
+	msg: {"cmd": "reconnect", "token": "TOKEN", "packidx": 10}
 ]]
 local function hanshake(id, msg, addr)
+	print("hanshake", id, msg)
 	local msg = json.decode(msg)
 
 	if msg.cmd == "login" then
@@ -52,8 +53,9 @@ local function hanshake(id, msg, addr)
 		end
 	else
 		assert(msg.cmd == "reconnect")
+		assert(msg.packidx >= 0)
 		local agent = assert(token_auth(msg.token))
-		skynet.send(agent, "lua", "reconnect", id)
+		skynet.send(agent, "lua", "reconnect", id, msg.packidx)
 	end
 end
 

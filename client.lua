@@ -33,8 +33,10 @@ local socket = require "client.socket"
 local json = require "json"
 
 local login = false
+local reconnecting = false
 local last = ""
-
+local token
+local packidx = 0
 
 local fd = assert(socket.connect("127.0.0.1", 6666))
 socket.send(fd, "WIND\n") 		-- auth token
@@ -62,25 +64,35 @@ local function print_package()
 	end
 
 	local pack = last:sub(3, 2+sz)
-	print(pack)
+	local msg, index = string.unpack("c"..(sz-4)..">I4", pack)
+	packidx = index
+	print(index, msg)
 	last = last:sub(3+sz)
 	print_package()
 end
 
 
 local function dispatch_message()
+	if not fd then
+		return
+	end
 	local r = socket.recv(fd)
 	if r and #r>0 then
-		if login then
+		if login and not reconnecting then
 			last = last .. r
 			print_package()
 		else
-			login = true
-			print(r)
+			if not login then
+				local ok;ok, token = r:match("(.+), (.+)\n")
+				print(ok, token)
+				login = true
+			else
+				reconnecting = false
+				local ok;ok, last = r:match("(.+)\n(.+)")
+				print(ok)
+				print_package()
+			end
 		end
-	end
-	if r == "" then
-		error "Server closed"
 	end
 end
 
@@ -90,6 +102,21 @@ local CMD = {}
 function CMD.bet(n)
 	n = n and tonumber(n) or 1000
 	send_request("bet", {gold = n})
+end
+
+function CMD.reconnect()
+	socket.close(fd)
+	fd = nil
+	last = ""
+
+	print("will reconnect server after 8s")
+	socket.usleep(8*1000000)
+
+	print("start connect ...")
+	reconnecting = true
+	fd = assert(socket.connect("127.0.0.1", 6666))
+	socket.send(fd, "WIND\n")
+	socket.send(fd, string.format('{"cmd":"reconnect", "token":"%s", "packidx":%d}\n', token, packidx))
 end
 
 
