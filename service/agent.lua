@@ -67,10 +67,12 @@ local function start_socket(id)
 		end
 		local ok, name, params, response = pcall(decode, pack)
 		if ok then
-			local r = skynet.call(worker, "lua", "player_request", p.id, name, params)
-			if response then
-				send_pack(response(r))
-			end
+			skynet.fork(function ()
+				local r = skynet.call(worker, "lua", "player_request", p.id, name, params)
+				if response then
+					send_pack(response(r))
+				end
+			end)
 		else
 			skynet.error(string.format("agent decode error, pack: %s, err:%s", pack, name))
 		end
