@@ -28,6 +28,22 @@ end
 local S = {}
 
 
+function S.testlcok1()
+	local q1 = wind.query("match1")
+	skynet.sleep(100)
+	local q2 = wind.query("match2")
+
+	return "testlcok1 done"
+end
+
+function S.testlcok2()
+	local q2 = wind.query("match2")
+	skynet.sleep(100)
+	local q1 = wind.query("match1")
+	return "testlcok2 done"
+end
+
+
 function S.player_login(pid, addr)
 	local u = find_or_register(pid)
 	wind.new("user@"..pid, u)
@@ -36,7 +52,7 @@ end
 
 
 function S.player_request(pid, name, params)
-	local p <close> = wind.query("user@"..pid)
+	local p = wind.query("user@"..pid)
 	local f = assert(request[name], name)
 	return f(p, params)
 end
@@ -48,7 +64,7 @@ end
 
 
 skynet.start(function()
-	skynet.dispatch("lua", function(session, address, cmd, ...)
+	wind.dispatch("lua", function(session, address, cmd, ...)
 		local f = S[cmd]
 		if f then
 			skynet.ret(skynet.pack(f(...)))

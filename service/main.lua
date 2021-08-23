@@ -14,6 +14,7 @@ skynet.start(function ()
 	end
 	skynet.newservice("debug_console", 5555)
 
+	
 
 	-- ddz states
 
@@ -29,6 +30,7 @@ skynet.start(function ()
 	end
 	
 	skynet.call(skynet.newservice("gate"), "lua", "init", workers)
+	skynet.call(skynet.newservice("test"), "lua", "init", workers)
 
 	skynet.exit()
 end)
