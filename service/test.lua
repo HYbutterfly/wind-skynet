@@ -10,11 +10,11 @@ function S.init(workers)
 	skynet.sleep(100)
 	skynet.fork(function ()
 		skynet.error("call testlcok1")
-		skynet.error(skynet.call(workers[1], "lua", "testlcok1"))
+		skynet.error(skynet.call(workers[1], "lua", "testlcok1"), skynet.now())
 	end)
 	skynet.fork(function ()
 		skynet.error("call testlcok2")
-		skynet.error(skynet.call(workers[2], "lua", "testlcok2"))
+		skynet.error(skynet.call(workers[2], "lua", "testlcok2"), skynet.now())
 	end)
 end
 

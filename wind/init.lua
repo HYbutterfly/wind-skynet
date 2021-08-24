@@ -7,6 +7,10 @@ local state_map = {}
 local state_version = {}
 local request = {}			-- thread : {session, source, fork:{}, timeout:{}}
 
+local skynet_dispatch = skynet.dispatch
+local skynet_fork = skynet.fork
+local skynet_timeout = skynet.timeout
+
 
 local function update_state(name, version, state, patches)
 	if version == state_version[name] then
@@ -71,17 +75,6 @@ function wind.query(...)
 end
 
 
-function wind.fork(f, ...)
-	local req = request[coroutine.running()]
-	if req then
-		req.forks = req.forks or {}
-		table.insert(req.forks, f, {...}) 
-	else
-		return skynet.fork(f, ...)
-	end
-end
-
-
 local function unlock(req)
 	local patch_map = {}
 
@@ -102,33 +95,63 @@ local function unlock(req)
 	end
 end
 
-
-function wind.dispatch(msg_type, f)
-	skynet.dispatch(msg_type, function (session, source, ...)
-		local req = {id = string.format("%04x@%04x", source, session)}
+local function hook(f)
+	return function (...)
+		local req = {id = string.format("%x@%s", skynet.self(), tostring(coroutine.running()))}
 		request[coroutine.running()] = req
+		local count = 0
 
 		::rollback::
 		req.locked = {}
 		req.forks = {}
-		
-		local ok, err = pcall(f, session, source, ...)
+		req.timeouts = {}
+
+		local ok, err = pcall(f, ...)
 		if ok then
 			unlock(req)
-			if req.forks then
-				for i=1,#req.forks,2 do
-					skynet.fork(req.forks[i], req.forks[i+1])
-				end
+			for i=1,#req.forks,2 do
+				skynet_fork(hook(req.forks[i]), table.unpack(req.forks[i+1]))
+			end
+			for i=1,#req.timeouts,2 do
+				skynet_timeout(req.timeouts[i], hook(req.timeouts[i+1]))
 			end
 		else
 			if err == ERR_ROLLBACK then
-				skynet.error("will rollback and re-execute", ...)
+				count = count + 1
+				skynet.sleep(count)
+				if count%5 == 0 then
+					skynet.error(string.format("WARNING: thread[%s] rollback %d times", tostring(coroutine.running()), count), ...)
+				end 
 				goto rollback
 			else
-				skynet.error("worker dispatch error:", err, ...)
+				skynet.error("worker running error:", err, ...)
 			end
 		end
-	end)
+	end
+end
+
+function skynet.timeout(time, f)
+	local req = request[coroutine.running()]
+	if req then
+		table.insert(req.timeouts, time)
+		table.insert(req.timeouts, f)
+	else
+		return skynet_timeout(time, hook(f))
+	end
+end
+
+function skynet.fork(f, ...)
+	local req = request[coroutine.running()]
+	if req then
+		table.insert(req.forks, f)
+		table.insert(req.forks, {...}) 
+	else
+		return skynet_fork(hook(f), ...)
+	end
+end
+
+function skynet.dispatch(msg_type, f)
+	skynet_dispatch(msg_type, hook(f))
 end
 
 

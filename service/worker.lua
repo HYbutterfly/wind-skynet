@@ -32,6 +32,8 @@ function S.testlcok1()
 	local q1 = wind.query("match1")
 	skynet.sleep(100)
 	local q2 = wind.query("match2")
+	local q3 = wind.query("match3")
+	q3[1] = "123"
 
 	return "testlcok1 done"
 end
@@ -40,6 +42,12 @@ function S.testlcok2()
 	local q2 = wind.query("match2")
 	skynet.sleep(100)
 	local q1 = wind.query("match1")
+
+	skynet.fork(function ()
+		local q3 = wind.query("match3")
+		skynet.sleep(100)
+		skynet.error("q3[1] =", q3[1])
+	end)
 	return "testlcok2 done"
 end
 
@@ -64,7 +72,7 @@ end
 
 
 skynet.start(function()
-	wind.dispatch("lua", function(session, address, cmd, ...)
+	skynet.dispatch("lua", function(session, address, cmd, ...)
 		local f = S[cmd]
 		if f then
 			skynet.ret(skynet.pack(f(...)))
