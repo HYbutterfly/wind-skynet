@@ -110,6 +110,10 @@ end
 
 
 local function intersect(t1, t2)
+	if #t2 == 0 then
+		return false
+	end
+
 	for i,v in ipairs(t2) do
 		if table.find_one(t1, v) then
 			return true
@@ -118,25 +122,34 @@ local function intersect(t1, t2)
 	return false
 end
 
--- 目前只考虑了2个 request 的简单死锁
-local function deadlock(me, names)
-	for _,name in ipairs(names) do
-		local other = locked[name]
-		if other then
-			assert(me ~= other)
-			-- 如果other 在等待 me 中已锁定的 state 则形成死锁
-			if intersect(me.locked, other.waitting) then
-				local list = {}
-				table.insert(list, me)
-				table.insert(list, other)
-				table.sort(list, function (a, b)
-					return a.time < b.time
-				end)
-				return list
+
+--[[
+	t1: {s1}, {s2}		-- s2 被 t2 锁定
+	t2: {s2}, {s3}		-- s3 被 t3 锁定 
+	t3: {s3}, {s1}		-- s1 被 t1 锁定
+]]
+local function deadlock(me, query)
+	local function _deadlock(other)
+		if intersect(me.locked, other.waitting) then
+			return true
+		else
+			for _,name in ipairs(other.waitting) do
+				local other2 = locked[name]
+				if other2 and _deadlock(other2) then
+					return true
+				end
 			end
 		end
 	end
+
+	for _,name in ipairs(query) do
+		local other = locked[name]
+		if other and _deadlock(other) then
+			return true
+		end
+	end
 end
+
 
 local function remove_from_waitting(req)
 	for i,v in ipairs(waitting) do
@@ -147,19 +160,13 @@ local function remove_from_waitting(req)
 end
 
 
-local function interrupt(req, in_waitting)
+local function interrupt(req)
 	for _,name in ipairs(req.locked) do
 		locked[name] = false
 	end
 
 	req.locked = {}
 	req.waitting = {}
-
-	if in_waitting then
-		local token = assert(remove_from_waitting(req))
-		token.retry = true
-		skynet.wakeup(token)
-	end
 end
 
 
@@ -173,19 +180,12 @@ function S.lock(req_id, names)
 	if try_lock(req, names) then
 		return querystates(names)
 	else
-		local list = deadlock(req, names)
-		if list then
+		if deadlock(req, names) then
 			skynet.fork(function ()
-				for i=2,#list do
-					interrupt(list[i], list[i] ~= req)
-				end
+				interrupt(req)
 				try_wakup()
 			end)
-			if list[1] == req then
-				return join_waitting(req, names)
-			else
-				return false
-			end
+			return false
 		else
 			return join_waitting(req, names)
 		end
