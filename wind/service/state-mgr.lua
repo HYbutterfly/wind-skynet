@@ -97,7 +97,7 @@ local function join_waitting(req, names)
 	waitting[#waitting + 1] = token
 	skynet.wait(token)
 
-	if token.retry then
+	if token.rollback then
 		return false
 	end
 

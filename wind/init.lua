@@ -48,13 +48,13 @@ function wind.slice(name)
 	return skynet.call(state_mgr, "lua", "slice", name)
 end
 
-local ERR_RETRY <const> = {}
+local ERR_ROLLBACK <const> = {}
 
 function wind.query(...)
 	local req = request[coroutine.running()]
 	local names = {...}
 	local addrs = skynet.call(state_mgr, "lua", "lock", req.id, names)
-	assert(addrs, ERR_RETRY)
+	assert(addrs, ERR_ROLLBACK)
 	local results = {}
 
 	for i,addr in ipairs(addrs) do
@@ -108,7 +108,7 @@ function wind.dispatch(msg_type, f)
 		local req = {id = string.format("%04x@%04x", source, session)}
 		request[coroutine.running()] = req
 
-		::retry::
+		::rollback::
 		req.locked = {}
 		req.forks = {}
 		
@@ -121,9 +121,9 @@ function wind.dispatch(msg_type, f)
 				end
 			end
 		else
-			if err == ERR_RETRY then
-				skynet.error("will retry", ...)
-				goto retry
+			if err == ERR_ROLLBACK then
+				skynet.error("will rollback and re-execute", ...)
+				goto rollback
 			else
 				skynet.error("worker dispatch error:", err, ...)
 			end
