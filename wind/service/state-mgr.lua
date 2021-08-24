@@ -97,7 +97,7 @@ local function join_waitting(req, names)
 	waitting[#waitting + 1] = token
 	skynet.wait(token)
 
-	if token.retry then
+	if token.rollback then
 		return false
 	end
 
@@ -157,7 +157,7 @@ local function interrupt(req, in_waitting)
 
 	if in_waitting then
 		local token = assert(remove_from_waitting(req))
-		token.retry = true
+		token.rollback = true
 		skynet.wakeup(token)
 	end
 end
