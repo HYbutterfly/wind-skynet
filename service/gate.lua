@@ -19,19 +19,18 @@ local function worker()
 end
 
 
-
 local function token_auth(t)
 	assert(t)
-	local pid, agent = token.decode(t)
+	local uid, agent = token.decode(t)
 	if agent then
 		agent = tonumber(agent)
-		assert(agent == logged[pid])
+		assert(agent == logged[uid])
 		return agent
 	end
 end
 
 --[[
-	msg: {"cmd": "login", "pid": "123456"}
+	msg: {"cmd": "login", "uid": "123456"}
 	msg: {"cmd": "reconnect", "token": "TOKEN", "packidx": 10}
 ]]
 local function hanshake(id, msg, addr)
@@ -39,8 +38,8 @@ local function hanshake(id, msg, addr)
 	local msg = json.decode(msg)
 
 	if msg.cmd == "login" then
-		local pid = assert(msg.pid)
-		local agent = logged[pid]
+		local uid = assert(msg.uid)
+		local agent = logged[uid]
 
 		if agent then
 			-- client re-login or new client(device) login
@@ -48,8 +47,8 @@ local function hanshake(id, msg, addr)
 		else
 			-- real logic login in server
 			agent = skynet.newservice "agent"
-			logged[pid] = agent
-			skynet.send(agent, "lua", "init", worker(), id, addr, pid)
+			logged[uid] = agent
+			skynet.send(agent, "lua", "init", worker(), id, addr, uid)
 		end
 	else
 		assert(msg.cmd == "reconnect")

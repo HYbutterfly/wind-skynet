@@ -6,7 +6,7 @@ local conf = require "conf"
 local token = require "wind.token"
 
 local worker
-local p = {}
+local u = {}
 local packidx = 0
 local pack_list = {}
 
@@ -21,8 +21,8 @@ local function send_pack(pack)
 		pack_list[packidx-128] = nil
 	end 
 
-	if p.sock then
-		socket.write(p.sock, pack)
+	if u.sock then
+		socket.write(u.sock, pack)
 	end
 end
 
@@ -61,14 +61,14 @@ local function start_socket(id)
 			break
 		end
 
-		if id ~= p.sock then
+		if id ~= u.sock then
 			skynet.error("agent alreay use new socket id, this pack will been ignore")
 			break
 		end
 		local ok, name, params, response = pcall(decode, pack)
 		if ok then
 			skynet.fork(function ()
-				local r = skynet.call(worker, "lua", "player_request", p.id, name, params)
+				local r = skynet.call(worker, "lua", "request", u.id, name, params)
 				if response then
 					send_pack(response(r))
 				end
@@ -80,8 +80,8 @@ local function start_socket(id)
 	
 	socket.close(id)
 	skynet.error("socket closed", id)
-	if id == p.sock then
-		p.sock = nil
+	if id == u.sock then
+		u.sock = nil
 	end
 end
 
@@ -101,8 +101,8 @@ function S.reconnect(id, idx)
 		return
 	end
 
-	socket.close(p.sock)
-	p.sock = id
+	socket.close(u.sock)
+	u.sock = id
 	socket.write(id, "200 OK\n")
 
 	-- re-send packages
@@ -116,27 +116,27 @@ end
 
 -- client re-login or new client(device) login
 function S.login(id)
-	socket.close(p.sock)
-	p.sock = id
+	socket.close(u.sock)
+	u.sock = id
 
 	socket.start(id)
-	socket.write(id, string.format("200 OK, %s\n", token.encode(p.id, skynet.self())))
+	socket.write(id, string.format("200 OK, %s\n", token.encode(u.id, skynet.self())))
 	skynet.fork(start_socket, id)
 end
 
 
 -- real login in server (client first login)
-function S.init(_worker, id, addr, pid)
+function S.init(_worker, id, addr, uid)
 	worker = _worker
 
-	p.sock = id
-	p.id = pid
-	p.addr = addr
+	u.sock = id
+	u.id = uid
+	u.addr = addr
 
-	skynet.call(worker, "lua", "player_login", pid, addr)
+	skynet.call(worker, "lua", "login", uid, addr)
 
 	socket.start(id)
-	socket.write(id, string.format("200 OK, %s\n", token.encode(p.id, skynet.self())))
+	socket.write(id, string.format("200 OK, %s\n", token.encode(u.id, skynet.self())))
 	skynet.fork(start_socket, id)
 
 	skynet.fork(function ()
