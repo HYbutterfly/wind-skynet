@@ -99,6 +99,11 @@ end
 ----------------------------------------------------------------------------------
 local CMD = {}
 
+function CMD.baseinfo()
+	send_request "baseinfo"
+end
+
+
 function CMD.bet(n)
 	n = n and tonumber(n) or 1000
 	send_request("bet", {gold = n})

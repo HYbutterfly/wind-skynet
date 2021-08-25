@@ -1,7 +1,8 @@
 local skynet = require "skynet"
 require "skynet.manager"
-local conf = require "conf"
-local wind = require "wind"
+
+local initialization = require "game.ddz.initialization"
+
 
 skynet.start(function ()
 
@@ -14,23 +15,13 @@ skynet.start(function ()
 	end
 	skynet.newservice("debug_console", 5555)
 
-	
-
-	-- ddz states
-
-	wind.new("match1", {})
-	wind.new("match2", {})
-	wind.new("match3", {})
-	
-	-- end
+	initialization()
 
 	local workers = {}
-	for i=1,conf.nworker do
+	for i=1,4 do
 		workers[i] = skynet.newservice("worker", i)
 	end
 	
 	skynet.call(skynet.newservice("gate"), "lua", "init", workers)
-	skynet.call(skynet.newservice("test"), "lua", "init", workers)
-
 	skynet.exit()
 end)

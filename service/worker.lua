@@ -1,6 +1,7 @@
 local skynet = require "skynet"
 local wind = require "wind"
 local db = require "wind.mongo"
+local request = require "game.ddz.request"
 
 local ID = ...
 
@@ -14,42 +15,7 @@ local function find_or_register(pid)
 end
 
 
-local request = {}
-
-
-function request:bet(params)
-	return {ok = true}
-end
-
-
-
------------------------------------------------------------------------
-
 local S = {}
-
-
-function S.testlcok1()
-	local q1 = wind.query("match1")
-	skynet.sleep(100)
-	local q2 = wind.query("match2")
-	local q3 = wind.query("match3")
-	q3[1] = "123"
-
-	return "testlcok1 done"
-end
-
-function S.testlcok2()
-	local q2 = wind.query("match2")
-	skynet.sleep(100)
-	local q1 = wind.query("match1")
-
-	skynet.fork(function ()
-		local q3 = wind.query("match3")
-		skynet.sleep(100)
-		skynet.error("q3[1] =", q3[1])
-	end)
-	return "testlcok2 done"
-end
 
 
 function S.player_login(pid, addr)
