@@ -55,9 +55,13 @@ function table.random_remove_n(t, n)
     return r
 end
 
-function table.append(t, list)
-    for i,v in ipairs(list) do
-        table.insert(t, v)
+function table.append(t, one)
+    if type(one) == "table" then
+        for i,v in ipairs(one) do
+            table.insert(t, v)
+        end
+    else
+        table.insert(t, one)
     end
     return t
 end
@@ -105,7 +109,7 @@ end
 function table.find_one(t, item)
 	for i,v in ipairs(t) do
 		if v == item then
-			return true
+			return i
 		end
 	end
 	return false

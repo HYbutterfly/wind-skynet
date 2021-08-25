@@ -133,18 +133,18 @@ function S.init(_worker, id, addr, uid)
 	u.id = uid
 	u.addr = addr
 
-	skynet.call(worker, "lua", "login", uid, addr)
+	skynet.call(worker, "lua", "login", uid, addr, skynet.self())
 
 	socket.start(id)
 	socket.write(id, string.format("200 OK, %s\n", token.encode(u.id, skynet.self())))
 	skynet.fork(start_socket, id)
 
-	skynet.fork(function ()
-		while true do
-			skynet.sleep(500)
-			send_request "heartbeat"
-		end
-	end)
+	-- skynet.fork(function ()
+	-- 	while true do
+	-- 		skynet.sleep(500)
+	-- 		send_request "heartbeat"
+	-- 	end
+	-- end)
 end
 
 

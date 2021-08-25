@@ -32,6 +32,8 @@ end
 local socket = require "client.socket"
 local json = require "json"
 
+
+local uid = ...
 local login = false
 local reconnecting = false
 local last = ""
@@ -39,8 +41,8 @@ local token
 local packidx = 0
 
 local fd = assert(socket.connect("127.0.0.1", 6666))
-socket.send(fd, "WIND\n") 		-- auth token
-socket.send(fd, '{"cmd":"login", "uid":"123456"}\n') 	-- handshake, use `pid` to login
+socket.send(fd, "WIND\n") 												-- auth token
+socket.send(fd, string.format('{"cmd":"login", "uid":"%s"}\n', uid))	-- handshake
 
 
 local session = 0
@@ -101,6 +103,10 @@ local CMD = {}
 
 function CMD.base()
 	send_request "baseinfo"
+end
+
+function CMD.match()
+	send_request("start_match", {lv = 2})
 end
 
 

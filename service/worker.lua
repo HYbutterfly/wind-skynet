@@ -8,7 +8,7 @@ local ID = ...
 local function find_or_register(uid)
 	local u = db.user.find_one{id = uid}
 	if not u then
-		u = {id = uid, gold = 0, diamond = 0}
+		u = {id = uid, gold = 500000, diamond = 500}
 		u._id = db.user.insert(u)
 	end
 	return u
@@ -18,8 +18,12 @@ end
 local S = {}
 
 
-function S.login(uid, addr)
+function S.login(uid, addr, agent)
 	local u = find_or_register(uid)
+
+	u.status = "idle"
+	u.agent = agent
+	
 	wind.new("user@"..uid, u)
 	skynet.error(string.format("User %s login", uid))
 end
