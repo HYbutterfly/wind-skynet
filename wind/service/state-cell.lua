@@ -3,7 +3,7 @@ local ltdiff = require "ltdiff"
 local db = require "wind.mongo"
 local persistence = require "conf.persistence"
 
-local ID <const> = ...
+local ID = ...
 local t
 local version = 0
 local patches = {}
@@ -16,7 +16,12 @@ local S = {}
 
 
 function S.init(...)
-	t = ...
+	local code;t, code = ...
+
+	if code then
+		load(code, "init", "t", S)()
+	end
+
 	if collname and persistence[collname] then
 		conf = persistence[collname]
 		conf.delay = conf.delay or 0

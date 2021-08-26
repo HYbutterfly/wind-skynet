@@ -55,12 +55,12 @@ end
 local S = {}
 
 
-function S.newstate(name, t)
+function S.newstate(name, t, code)
 	assert(type(t) == "table")
 	assert(not state[name], string.format("state[%s] already exists", name))
 
 	state[name] = skynet.newservice("state-cell", name)
-	skynet.call(state[name], "lua", "init", t)
+	skynet.call(state[name], "lua", "init", t, code)
 	locked[name] = false
 	try_wakup()
 end

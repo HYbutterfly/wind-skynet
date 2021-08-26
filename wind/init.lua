@@ -35,10 +35,10 @@ end
 local wind = {}
 
 
-function wind.new(name, t)
+function wind.new(name, t, code)
 	assert(type(name) == "string")
 	assert(type(t) == "table")
-	skynet.call(state_mgr, "lua", "newstate", name, t)
+	skynet.call(state_mgr, "lua", "newstate", name, t, code)
 end
 
 
@@ -65,7 +65,9 @@ function wind.query(...)
 		local name = names[i]
 		local version, state, patches = skynet.call(addr, "lua", "query", state_version[name])
 		local old = update_state(name, version, state, patches)
-		local new = table.clone(old)
+		local new = setmetatable(table.clone(old), {__call = function (_, ...)
+			return skynet.call(addr, "lua", ...)
+		end})
 
 		table.insert(req.locked, {name = name, old = old, new = new})
 		results[i] = new

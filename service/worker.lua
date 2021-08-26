@@ -2,6 +2,7 @@ local skynet = require "skynet"
 local wind = require "wind"
 local db = require "wind.mongo"
 local request = require "game.ddz.request"
+local helper = require "game.ddz.helper"
 
 local ID = ...
 
@@ -50,4 +51,16 @@ skynet.start(function()
 			error(string.format("Unknown command %s", tostring(cmd)))
 		end
 	end)
+
+
+	if ID == '1' then
+		skynet.fork(function ()
+			local c = 0
+			local id = helper.new_timer(100, function ()
+				c = c + 1
+				print("tick", id, c)
+			end, -1)
+		end)
+	end
+
 end)

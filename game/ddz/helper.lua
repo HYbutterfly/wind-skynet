@@ -1,29 +1,22 @@
+local skynet = require "skynet"
 local wind = require "wind"
 local query = wind.query
 
 local helper = {}
 
 
-
-local function gen_timer_id()
-	local s = query("uniqueid-timer")
-	s.id = s.id + 1
-	return tostring(s.id)
-end
-
-
 function helper.new_timer(delay, func, iteration, on_end)
 	iteration = iteration or 1
-	local id = gen_timer_id()
 	local count = 0
 
-	local time_mgr = query("time_mgr")
+	local time_mgr = query("timer-mgr")
+	local id = time_mgr("timerid")
 	time_mgr[id] = true 
 
 	skynet.fork(function ()
 		while true do
 			skynet.sleep(delay)
-			local time_mgr = wind.slice("time_mgr")
+			local time_mgr = wind.slice("timer-mgr")
 			if time_mgr[id] then
 				skynet.fork(func)
 				count = count + 1
@@ -43,7 +36,7 @@ function helper.new_timer(delay, func, iteration, on_end)
 end
 
 function helper.cancel_timer(id)
-	local time_mgr = query("time_mgr")
+	local time_mgr = query("timer-mgr")
 	time_mgr[id] = nil
 end
 
