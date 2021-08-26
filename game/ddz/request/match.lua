@@ -13,9 +13,11 @@ local function qusers(uid_list)
 	end)
 end
 
+
 local function between(n, min, max)
 	return min <= n and n <= max
 end
+
 
 local function match_room_info(id, lv, users)
 	local room = {id = id, lv = lv, users = {}}
@@ -31,19 +33,12 @@ local function match_room_info(id, lv, users)
 	return room
 end
 
+
 local function radio(users, name, params)
 	for _,u in ipairs(users) do
 		skynet.error("send ", u.agent, name, params)
 		skynet.send(u.agent, "lua", "send2client", name, params)
 	end
-end
-
------------------------------------------------------------
-local request = {}
-
-
-function request:baseinfo()
-	return self
 end
 
 
@@ -66,6 +61,9 @@ local function match_ok(lv, uid_list)
 	end
 	radio(users, "match_ok", {room = match_room_info(id, lv, users)})
 end
+
+---------------------------------------------------------------------------
+local request = {}
 
 
 function request:start_match(params)
@@ -112,7 +110,6 @@ function request:cancel_match()
 	self.status = "idle"
 	return {}
 end
-
 
 
 return request
