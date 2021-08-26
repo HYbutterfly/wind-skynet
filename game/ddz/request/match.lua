@@ -33,11 +33,13 @@ local function match_room_info(id, lv, users)
 	return room
 end
 
+local function send2client(u, name, params)
+	skynet.send(u.agent, "lua", "send2client", name, params)
+end
 
 local function radio(users, name, params)
 	for _,u in ipairs(users) do
-		skynet.error("send ", u.agent, name, params)
-		skynet.send(u.agent, "lua", "send2client", name, params)
+		send2client(u, name, params)
 	end
 end
 
@@ -46,7 +48,11 @@ local function match_ok(lv, uid_list)
 	skynet.sleep(100)
 
 	local users = qusers(uid_list)
-	local id = helper.gen_room_id()
+	local mgr = query("room-mgr")
+	mgr.id = mgr.id + 1
+	mgr.count[lv] = mgr.count[lv] + 1
+
+	local id = tostring(mgr.id)
 
 	wind.new("room"..id, {
 		id = id,
@@ -66,6 +72,16 @@ end
 local request = {}
 
 
+local function cancel_match(u)
+	local lv = assert(u.match_lv)
+	local queue = query("match"..lv)
+	local index = table.find_one(queue, u.id)
+	table.remove(queue, index)
+
+	u.status = "idle"
+end
+
+
 function request:start_match(params)
 
 	local lv = assert(params.lv)
@@ -76,9 +92,9 @@ function request:start_match(params)
 	assert(between(self.gold, limit[1], limit[2]))
 
 	local queue = query("match"..lv)
+
 	if #queue == 2 then
 		local uid_list = table.splice(queue, 1, 2)
-		
 		local others = qusers(uid_list)
 		
 		for _,u in ipairs(others) do
@@ -93,6 +109,17 @@ function request:start_match(params)
 	else
 		self.status = "matching"
 		self.match_lv = lv
+
+		-- 30S 后自动取消匹配
+		self.match_timerid = helper.new_timer(30*100, function ()
+			local me = query("user@"..self.id)
+			if me.status == "matching" then
+				cancel_match(me)
+				me.match_timerid = nil
+				send2client(me, "match_failed")
+			end
+		end) 
+
 		table.insert(queue, self.id)
 		return {}
 	end
@@ -101,13 +128,9 @@ end
 
 function request:cancel_match()
 	assert(self.status == "matching")
-
-	local lv = assert(self.match_lv)
-	local queue = query("match"..lv)
-	local index = table.find_one(queue, self.id)
-	table.remove(queue, index)
-
-	self.status = "idle"
+	cancel_match(self)
+	helper.cancel_timer(self.match_timerid)
+	self.match_timerid = nil
 	return {}
 end
 

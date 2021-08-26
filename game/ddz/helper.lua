@@ -42,13 +42,6 @@ end
 
 
 
-function helper.gen_room_id()
-	local s = query("uniqueid-room")
-	s.id = s.id + 1
-	return tostring(s.id)
-end
-
-
 function helper.mquery(names, f)
 	local function pack(...)
 		return {...}		
