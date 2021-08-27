@@ -7,13 +7,15 @@ local request = {}		-- id: {time:123, locked:{name1, ...}, waiting:{name1, ...}}
 
 local function try_lock(req, names)
 	for _,name in ipairs(names) do
-		if not state[name] or locked[name] then
+		if not state[name] or (locked[name] and locked[name] ~= req) then
 			return false
 		end
 	end
 	for _,name in ipairs(names) do
-		table.insert(req.locked, name)
-		locked[name] = req
+		if not table.find_one(req.locked, name) then
+			table.insert(req.locked, name)
+			locked[name] = req
+		end
 	end
 	return true
 end

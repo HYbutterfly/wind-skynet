@@ -16,11 +16,8 @@ local S = {}
 
 
 function S.init(...)
-	local code;t, code = ...
-
-	if code then
-		load(code, "init", "t", S)()
-	end
+	t = ...
+	assert(type(t) == "table")
 
 	if collname and persistence[collname] then
 		conf = persistence[collname]

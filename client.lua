@@ -101,12 +101,16 @@ end
 ----------------------------------------------------------------------------------
 local CMD = {}
 
-function CMD.base()
+function CMD.b()
 	send_request "baseinfo"
 end
 
-function CMD.match()
+function CMD.m()
 	send_request("start_match", {lv = 2})
+end
+
+function CMD.r()
+	send_request("ready")
 end
 
 

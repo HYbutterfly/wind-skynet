@@ -34,7 +34,7 @@ end
 	msg: {"cmd": "reconnect", "token": "TOKEN", "packidx": 10}
 ]]
 local function hanshake(id, msg, addr)
-	print("hanshake", id, msg)
+	skynet.error("hanshake", id, msg)
 	local msg = json.decode(msg)
 
 	if msg.cmd == "login" then

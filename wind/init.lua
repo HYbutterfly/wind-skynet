@@ -35,10 +35,10 @@ end
 local wind = {}
 
 
-function wind.new(name, t, code)
+function wind.new(name, t)
 	assert(type(name) == "string")
 	assert(type(t) == "table")
-	skynet.call(state_mgr, "lua", "newstate", name, t, code)
+	skynet.call(state_mgr, "lua", "newstate", name, t)
 end
 
 
@@ -54,6 +54,14 @@ end
 
 local ERR_ROLLBACK <const> = {}
 
+local function find_in_locked(req, name)
+	for _,item in ipairs(req.locked) do
+		if item.name == name then
+			return item.new
+		end
+	end
+end
+
 function wind.query(...)
 	local req = request[coroutine.running()]
 	local names = {...}
@@ -63,13 +71,13 @@ function wind.query(...)
 
 	for i,addr in ipairs(addrs) do
 		local name = names[i]
-		local version, state, patches = skynet.call(addr, "lua", "query", state_version[name])
-		local old = update_state(name, version, state, patches)
-		local new = setmetatable(table.clone(old), {__call = function (_, ...)
-			return skynet.call(addr, "lua", ...)
-		end})
-
-		table.insert(req.locked, {name = name, old = old, new = new})
+		local new = find_in_locked(req, name)
+		if not new then
+			local version, state, patches = skynet.call(addr, "lua", "query", state_version[name])
+			local old = update_state(name, version, state, patches)
+			new = table.copy(old)
+			table.insert(req.locked, {name = name, old = old, new = new})
+		end
 		results[i] = new
 	end
 

@@ -98,8 +98,10 @@ function request:start_match(params)
 		local others = qusers(uid_list)
 		
 		for _,u in ipairs(others) do
+			helper.cancel_timer(u.match_timerid)
 			u.status = "match_ok"
 			u.match_lv = nil
+			u.match_timerid = nil
 		end
 		self.status = "match_ok"
 		self.match_lv = nil

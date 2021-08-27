@@ -4,6 +4,7 @@ local wind = require "wind"
 local moudles = {
 	"base",
 	"match",
+	"game",
 }
 
 
