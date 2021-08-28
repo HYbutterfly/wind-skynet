@@ -1,4 +1,8 @@
+local skynet = require "skynet"
+local service = require "skynet.service"
 local wind = require "wind"
+
+local service_ranklist = require "game.ddz.service.ranklist"
 
 
 local function init()
@@ -8,6 +12,9 @@ local function init()
 	wind.new("match1", {})
 	wind.new("match2", {})
 	wind.new("match3", {})
+
+
+	service.new("ranklist", service_ranklist)
 end
 
 
