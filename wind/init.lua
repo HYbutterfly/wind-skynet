@@ -65,23 +65,53 @@ end
 function wind.query(...)
 	local req = request[coroutine.running()]
 	local names = {...}
-	local addrs = skynet.call(state_mgr, "lua", "lock", req.id, names)
+	local names2 = {}
+	for i,item in ipairs(names) do
+		if type(item) == "string" then
+			table.insert(names2, item)
+		else
+			assert(type(item) == "table")
+			for _,v in ipairs(item) do
+				table.insert(names2, v)
+			end
+		end
+	end
+
+	local addrs = skynet.call(state_mgr, "lua", "lock", req.id, names2)
 	assert(addrs, ERR_ROLLBACK)
 	local results = {}
 
 	for i,addr in ipairs(addrs) do
-		local name = names[i]
+		local name = names2[i]
 		local new = find_in_locked(req, name)
 		if not new then
 			local version, state, patches = skynet.call(addr, "lua", "query", state_version[name])
 			local old = update_state(name, version, state, patches)
-			new = table.copy(old)
+			new = table.clone(old)
 			table.insert(req.locked, {name = name, old = old, new = new})
 		end
 		results[i] = new
 	end
 
-	return table.unpack(results)
+	local results2 = {}
+	local index = 0
+	for i,item in ipairs(names) do
+
+		if type(item) == "string" then 
+			index = index + 1
+			table.insert(results2, results[index])
+			results2[i] = results[index]
+		else
+			local tmp = {}
+			for _,v in ipairs(item) do
+				index = index + 1
+				table.insert(tmp, results[index])
+			end
+			results2[i] = tmp
+		end
+	end
+
+	return table.unpack(results2)
 end
 
 
@@ -91,7 +121,7 @@ local function unlock(req)
 	for _,item in ipairs(req.locked) do
 		local name = item.name
 		local old = item.old
-		local new = item.new		
+		local new = item.new
 		local diff = ltdiff.diff(old, new) or false
 
 		patch_map[name] = diff

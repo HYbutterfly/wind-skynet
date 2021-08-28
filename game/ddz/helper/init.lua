@@ -42,24 +42,5 @@ end
 
 
 
-function helper.mquery(names, f)
-	local function pack(...)
-		return {...}		
-	end
-
-	local list
-	if f then
-		list = {}
-		for i,v in ipairs(names) do
-			list[i] = f(v)
-		end
-	else
-		list = names
-	end
-
-	return pack(query(table.unpack(list)))
-end
-
-
 
 return helper

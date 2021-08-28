@@ -114,6 +114,9 @@ end
 
 
 skynet.start(function()
+	skynet.info_func(function ()
+		return t
+	end)
 	skynet.dispatch("lua", function(session, address, cmd, ...)
 		local f = S[cmd]
 		if f then

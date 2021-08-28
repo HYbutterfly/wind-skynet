@@ -57,12 +57,12 @@ end
 local S = {}
 
 
-function S.newstate(name, t, code)
+function S.newstate(name, t)
 	assert(type(t) == "table")
 	assert(not state[name], string.format("state[%s] already exists", name))
 
 	state[name] = skynet.newservice("state-cell", name)
-	skynet.call(state[name], "lua", "init", t, code)
+	skynet.call(state[name], "lua", "init", t)
 	locked[name] = false
 	try_wakup()
 end
@@ -76,7 +76,7 @@ function S.releasestate(name)
 	local addr = state[name]
 	if addr then
 		state[name] = nil
-		skynet.send(addr, "lua", "exit")
+		pcall(skynet.call, addr, "lua", "exit")
 	end
 	return true
 end

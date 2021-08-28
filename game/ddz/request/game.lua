@@ -6,10 +6,22 @@ local ddzconf = require "conf.ddz"
 local query = wind.query
 local mquery = helper.mquery
 
+local function quser(uid)
+	return query("user@"..uid)
+end
+
 local function qusers(uid_list)
-	return mquery(uid_list, function (uid)
-		return "user@"..uid
-	end)
+	local list = {}
+	for i,v in ipairs(uid_list) do
+		list[i] = "user@"..v
+	end
+	return query(list)
+end
+
+local function qroom(roomid)
+	local room = query("room"..roomid)
+	local users = qusers(room.users)
+	return room, users	
 end
 
 local function send2client(u, name, params)
@@ -50,20 +62,21 @@ local function u_newtimer(u, f, time, on_end)
 end
 
 
-local function u_autoplay(u)
-	local room = query("room"..u.roomid)
-	-- todo
+local function u_autoplay(roomid, uid)
+	local room, users = qroom(roomid)
+	skynet.error("autoplay...", uid)
 end
 
 
-local function please_playcard(u)
+local function please_playcard(room, u)
 	u.game.status = "playing"
 
 	local function tick()
+		local u = quser(u.id)
 		u.game.clock = u.game.clock -1
 	end
 	local function on_end()
-		u_autoplay(u)
+		u_autoplay(room.id, u.id)
 	end
 	u_newtimer(u, tick, 30, on_end)
 end
@@ -85,20 +98,18 @@ local function gamestart(room, users)
 		send2client(u, "gamestart", {final_cards = room.final_cards, landlord_id = landlord.id, hand = u.game.hand})
 	end
 
-	please_playcard(landlord)
+	please_playcard(room, landlord)
 end
 
 
 function request:ready()
 	assert(self.status == "game")
 	assert(self.game.status == "init")
-	local room = query("room"..self.roomid)
-	local users = qusers(room.users)
+	local room, users = qroom(self.roomid)
 
 	self.game.status = "ready_ok"
 	radio(users, "p_ready_ok", {pid = self.id})
 
-	dump(users)
 	if all_ready_ok(users) then
 		gamestart(room, users)
 	end

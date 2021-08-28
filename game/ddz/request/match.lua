@@ -2,15 +2,15 @@ local skynet = require "skynet"
 local wind = require "wind"
 local helper = require "game.ddz.helper"
 local ddzconf = require "conf.ddz"
-
 local query = wind.query
-local mquery = helper.mquery
 
 
 local function qusers(uid_list)
-	return mquery(uid_list, function (uid)
-		return "user@"..uid
-	end)
+	local list = {}
+	for i,v in ipairs(uid_list) do
+		list[i] = "user@"..v
+	end
+	return query(list)
 end
 
 
@@ -60,10 +60,10 @@ local function match_ok(lv, uid_list)
 		users = uid_list
 	})
 
-	for _,u in ipairs(users) do
+	for i,u in ipairs(users) do
 		u.status = "game"
 		u.roomid = id
-		u.game = {status = "init"}
+		u.game = {status = "init", chair = i}
 	end
 	radio(users, "match_ok", {room = match_room_info(id, lv, users)})
 end
