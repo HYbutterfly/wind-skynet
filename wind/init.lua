@@ -135,6 +135,7 @@ local function hook(f)
 				goto rollback
 			else
 				skynet.error("worker running error:", err, ...)
+				unlock(req)
 			end
 		end
 	end
