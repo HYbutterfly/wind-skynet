@@ -27,7 +27,7 @@ local function match_room_info(id, lv, users)
 			nick = u.nick,
 			head = u.head,
 			gold = u.gold,
-			gamestatus = u.gamestatus
+			status = u.game.status
 		}
 	end
 	return room
@@ -63,7 +63,7 @@ local function match_ok(lv, uid_list)
 	for _,u in ipairs(users) do
 		u.status = "game"
 		u.roomid = id
-		u.gamestatus = "init"
+		u.game = {status = "init"}
 	end
 	radio(users, "match_ok", {room = match_room_info(id, lv, users)})
 end
