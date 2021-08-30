@@ -10,6 +10,8 @@ local request = {}			-- thread : {session, source, fork:{}, timeout:{}}
 local skynet_dispatch = skynet.dispatch
 local skynet_fork = skynet.fork
 local skynet_timeout = skynet.timeout
+local skynet_call = skynet.call
+local skynet_send = skynet.send
 
 
 local function update_state(name, version, state, patches)
@@ -145,6 +147,7 @@ local function hook(f)
 		req.locked = {}
 		req.forks = {}
 		req.timeouts = {}
+		req.sends = {}
 
 		local ok, err = pcall(f, ...)
 		if ok then
@@ -154,6 +157,9 @@ local function hook(f)
 			end
 			for i=1,#req.timeouts,2 do
 				skynet_timeout(req.timeouts[i], hook(req.timeouts[i+1]))
+			end
+			for i,item in ipairs(req.sends) do
+				skynet_send(table.unpack(item))
 			end
 		else
 			if err == ERR_ROLLBACK then
@@ -190,6 +196,20 @@ function skynet.fork(f, ...)
 		return skynet_fork(hook(f), ...)
 	end
 end
+
+function skynet.send(name, ...)
+	if name == ".launcher" then
+		return skynet_send(name, ...)
+	end
+
+	local req = request[coroutine.running()]
+	if req then
+		table.insert(req.sends, {name, ...})
+	else
+		return skynet_send(...)
+	end
+end
+
 
 function skynet.dispatch(msg_type, f)
 	skynet_dispatch(msg_type, hook(f))

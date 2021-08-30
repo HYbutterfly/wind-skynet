@@ -37,16 +37,6 @@ end
 ---------------------------------------------------------------------------
 local request = {}
 
-local function all_ready_ok(users)
-	for _,u in ipairs(users) do
-		if u.game.status ~= "ready_ok" then
-			return false
-		end
-	end
-	return true
-end
-
-
 local function u_canceltimer(u)
 	local timerid = u.game.timerid
 	if timerid then
@@ -81,6 +71,7 @@ local function please_playcard(room, u)
 	u_newtimer(u, tick, 30, on_end)
 end
 
+
 local function gamestart(room, users)
 	local pool = helper.shuffle(helper.one_deck_cards())
 	for i,u in ipairs(users) do
@@ -103,6 +94,15 @@ end
 
 
 function request:ready()
+	local function all_ready_ok(users)
+		for _,u in ipairs(users) do
+			if u.game.status ~= "ready_ok" then
+				return false
+			end
+		end
+		return true
+	end
+
 	assert(self.status == "game")
 	assert(self.game.status == "init")
 	local room, users = qroom(self.roomid)
@@ -116,15 +116,6 @@ function request:ready()
 	
 	return {}
 end
-
-
-
-
-
-
-
-
-
 
 
 return request

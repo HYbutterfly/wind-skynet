@@ -1,10 +1,12 @@
 local skynet = require "skynet"
 local wind = require "wind"
 local db = require "wind.mongo"
+local conf = require "conf"
 local request = require "game.ddz.request"
-local helper = require "game.ddz.helper"
+local initialization = require "game.ddz.initialization"
 
-local ID = ...
+
+local ID = ...;ID = math.tointeger(ID)
 
 local function find_or_register(uid)
 	local u = db.user.find_one{id = uid}
@@ -51,4 +53,13 @@ skynet.start(function()
 			error(string.format("Unknown command %s", tostring(cmd)))
 		end
 	end)
+
+	-- start up task
+	local nworker = conf.nworker
+	local tasks = initialization.tasks
+	for i,task in ipairs(tasks) do
+		if (i+nworker-1)%nworker + 1 == ID then
+			require(string.format("game.ddz.task.%s", task))()
+		end
+	end
 end)

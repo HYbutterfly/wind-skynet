@@ -5,6 +5,15 @@ local query = wind.query
 local helper = {}
 
 
+function helper.qusers(uid_list)
+	local list = {}
+	for i,v in ipairs(uid_list) do
+		list[i] = "user@"..v
+	end
+	return query(list)
+end
+
+
 function helper.new_timer(delay, func, iteration, on_end)
 	local iteration = iteration or 1
 	local count = 0

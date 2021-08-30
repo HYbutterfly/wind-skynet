@@ -1,6 +1,5 @@
 local skynet = require "skynet"
-require "skynet.manager"
-
+local conf = require "conf"
 local initialization = require "game.ddz.initialization"
 
 
@@ -15,10 +14,10 @@ skynet.start(function ()
 	end
 	skynet.newservice("debug_console", 5555)
 
-	initialization()
+	initialization.init()
 
 	local workers = {}
-	for i=1,4 do
+	for i=1,conf.nworker do
 		workers[i] = skynet.newservice("worker", i)
 	end
 	
