@@ -5,13 +5,9 @@ local helper = require "ddz.helper"
 local query = wind.query
 
 
-local function send2client(u, name, params)
-	skynet.send(u.agent, "lua", "send2client", name, params)
-end
-
 local function radio(users, name, params)
 	for _,u in ipairs(users) do
-		send2client(u, name, params)
+		u:send2client(name, params)
 	end
 end
 
@@ -38,7 +34,7 @@ local function match_ok(lv, uid_list)
 
 	local id = tostring(mgr.id)
 
-	wind.new("room"..id, {
+	wind.new("room#"..id, {
 		id = id,
 		lv = lv,
 		users = uid_list

@@ -1,6 +1,7 @@
 local skynet = require "skynet"
 local service = require "skynet.service"
 local ltdiff = require "ltdiff"
+local sclass = require "sclass"
 
 local state_mgr
 local state_map = {}
@@ -64,6 +65,14 @@ local function find_in_locked(req, name)
 	end
 end
 
+
+local function class(name)
+	name = string.lower(name)
+	local c = name:match("(%w+)@(.+)") or name:match("(%w+)#(.+)")
+	return c and sclass[c]
+end
+
+
 function wind.query(...)
 	local req = request[coroutine.running()]
 	local names = {...}
@@ -91,6 +100,11 @@ function wind.query(...)
 			local old = update_state(name, version, state, patches)
 			new = table.clone(old)
 			table.insert(req.locked, {name = name, old = old, new = new})
+		end
+
+		local c = class(name)
+		if c then
+			setmetatable(new, c)
 		end
 		results[i] = new
 	end

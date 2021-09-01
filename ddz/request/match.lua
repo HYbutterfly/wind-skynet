@@ -9,10 +9,6 @@ local function between(n, min, max)
 	return min <= n and n <= max
 end
 
-local function send2client(u, name, params)
-	skynet.send(u.agent, "lua", "send2client", name, params)
-end
-
 ---------------------------------------------------------------------------
 local request = {}
 
@@ -48,7 +44,7 @@ function request:start_match(params)
 		if me.status == "matching" then
 			cancel_match(me)
 			me.match_timerid = nil
-			send2client(me, "match_failed")
+			me:send2client("match_failed")
 		end
 	end) 
 	

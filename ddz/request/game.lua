@@ -24,13 +24,10 @@ local function qroom(roomid)
 	return room, users	
 end
 
-local function send2client(u, name, params)
-	skynet.send(u.agent, "lua", "send2client", name, params)
-end
 
 local function radio(users, name, params)
 	for _,u in ipairs(users) do
-		send2client(u, name, params)
+		u:send2client(name, params)
 	end
 end
 
@@ -86,7 +83,7 @@ local function gamestart(room, users)
 
 	for i,u in ipairs(users) do
 		u.game.is_landlord = u == landlord
-		send2client(u, "gamestart", {final_cards = room.final_cards, landlord_id = landlord.id, hand = u.game.hand})
+		u:send2client("gamestart", {final_cards = room.final_cards, landlord_id = landlord.id, hand = u.game.hand})
 	end
 
 	please_playcard(room, landlord)
