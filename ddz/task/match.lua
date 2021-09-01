@@ -1,7 +1,7 @@
 local skynet = require "skynet"
 local wind = require "wind"
 local db = require "wind.mongo"
-local helper = require "game.ddz.helper"
+local helper = require "ddz.helper"
 local query = wind.query
 
 
@@ -31,8 +31,6 @@ end
 
 
 local function match_ok(lv, uid_list)
-	skynet.sleep(100)
-
 	local users = helper.qusers(uid_list)
 	local mgr = query("room-mgr")
 	mgr.id = mgr.id + 1

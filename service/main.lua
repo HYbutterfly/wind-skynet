@@ -1,6 +1,6 @@
 local skynet = require "skynet"
 local conf = require "conf"
-local initialization = require "game.ddz.initialization"
+local initialization = require "ddz.initialization"
 
 
 skynet.start(function ()

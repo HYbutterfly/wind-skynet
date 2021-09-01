@@ -1,6 +1,6 @@
 local wind = require "wind"
 local db = require "wind.mongo"
-local helper = require "game.ddz.helper"
+local helper = require "ddz.helper"
 local query = wind.query
 
 local INTERVAL <const> = 5*60

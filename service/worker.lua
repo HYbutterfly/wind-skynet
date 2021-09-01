@@ -2,8 +2,8 @@ local skynet = require "skynet"
 local wind = require "wind"
 local db = require "wind.mongo"
 local conf = require "conf"
-local request = require "game.ddz.request"
-local initialization = require "game.ddz.initialization"
+local request = require "ddz.request"
+local initialization = require "ddz.initialization"
 
 
 local ID = ...;ID = math.tointeger(ID)
@@ -59,7 +59,7 @@ skynet.start(function()
 	local tasks = initialization.tasks
 	for i,task in ipairs(tasks) do
 		if (i+nworker-1)%nworker + 1 == ID then
-			require(string.format("game.ddz.task.%s", task))()
+			require(string.format("ddz.task.%s", task))()
 		end
 	end
 end)

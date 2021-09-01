@@ -11,7 +11,7 @@ local moudles = {
 local function load_moudles()
 	local request = {}
 	for _,name in ipairs(moudles) do
-		local m = require(string.format("game.ddz.request.%s", name))
+		local m = require(string.format("ddz.request.%s", name))
 		for k,v in pairs(m) do
 			assert(not request[k], k)
 			request[k] = v

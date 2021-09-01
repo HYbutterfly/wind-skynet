@@ -5,3 +5,4 @@ luaclib/
 *.o
 *.so
 conf/mongo.lua
+test.lua

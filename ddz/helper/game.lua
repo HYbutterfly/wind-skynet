@@ -1,4 +1,4 @@
-local helper = require "game.ddz.helper"
+local helper = require "ddz.helper"
 
 
 function helper.one_deck_cards()

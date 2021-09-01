@@ -1,6 +1,6 @@
 local skynet = require "skynet"
 local wind = require "wind"
-local helper = require "game.ddz.helper.game"
+local helper = require "ddz.helper.game"
 local ddzconf = require "conf.ddz"
 
 local query = wind.query
