@@ -5,6 +5,11 @@ local query = wind.query
 local helper = {}
 
 
+function helper.quser(uid)
+	return query("user@"..uid)
+end
+
+
 function helper.qusers(uid_list)
 	local list = {}
 	for i,v in ipairs(uid_list) do

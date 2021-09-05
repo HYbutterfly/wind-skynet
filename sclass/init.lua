@@ -1,7 +1,8 @@
 -- state classes
 
 local classes = {
-	"User"
+	"user",
+	"room"
 }
 
 

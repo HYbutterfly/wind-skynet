@@ -1,7 +1,6 @@
 local skynet = require "skynet"
 local service = require "skynet.service"
 local ltdiff = require "ltdiff"
-local sclass = require "sclass"
 
 local state_mgr
 local state_map = {}
@@ -35,7 +34,33 @@ local function update_state(name, version, state, patches)
 end
 
 
+local attach = {}
+local sclass = {}
+
+
 local wind = {}
+
+
+function wind.sclass(name, mt)
+	sclass[name] = mt
+end
+
+
+function wind.attach(new, tmp)
+	for k,v in pairs(tmp) do
+		new[k] = v
+	end
+
+	local a = attach[new]
+	if a then
+		for k,v in pairs(tmp) do
+			a[k] = v
+		end
+	else
+		attach[new] = tmp
+	end
+	return new
+end
 
 
 function wind.new(name, t)
@@ -48,7 +73,6 @@ end
 function wind.release(name)
 	return skynet.call(state_mgr, "lua", "releasestate", name)
 end
-
 
 
 function wind.slice(name)
@@ -102,9 +126,9 @@ function wind.query(...)
 			table.insert(req.locked, {name = name, old = old, new = new})
 		end
 
-		local c = class(name)
-		if c then
-			setmetatable(new, c)
+		local mt = class(name)
+		if mt then
+			setmetatable(new, mt)
 		end
 		results[i] = new
 	end
@@ -138,6 +162,12 @@ local function unlock(req)
 		local name = item.name
 		local old = item.old
 		local new = item.new
+		local a = attach[new]
+		if a then
+			for k in pairs(a) do
+				new[k] = nil
+			end
+		end
 		local diff = ltdiff.diff(old, new) or false
 
 		patch_map[name] = diff

@@ -4,6 +4,14 @@ local db = require "wind.mongo"
 local helper = require "ddz.helper"
 local query = wind.query
 
+local function gen_room_query(roomid, uid_list)
+	local list = {}
+	for i,v in ipairs(uid_list) do
+		list[i] = 'user@'..v
+	end
+	return 'room#'..roomid, list
+end
+
 
 local function radio(users, name, params)
 	for _,u in ipairs(users) do
@@ -40,10 +48,12 @@ local function match_ok(lv, uid_list)
 		users = uid_list
 	})
 
+	local _room, _users = gen_room_query(id, uid_list)
+
 	for i,u in ipairs(users) do
 		u.status = "game"
 		u.roomid = id
-		u.game = {status = "init", chair = i}
+		u.game = {status = "init", chair = i, _room = _room, _users = _users}
 	end
 	radio(users, "match_ok", {room = match_room_info(id, lv, users)})
 end

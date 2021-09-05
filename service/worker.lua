@@ -4,6 +4,7 @@ local db = require "wind.mongo"
 local conf = require "conf"
 local request = require "ddz.request"
 local initialization = require "ddz.initialization"
+local sclass = require "sclass"
 
 
 local ID = ...;ID = math.tointeger(ID)
@@ -53,6 +54,11 @@ skynet.start(function()
 			error(string.format("Unknown command %s", tostring(cmd)))
 		end
 	end)
+
+	-- set state's class
+	for i,name in ipairs(sclass) do
+		wind.sclass(name, sclass[name])
+	end
 
 	-- start up task
 	local nworker = conf.nworker
