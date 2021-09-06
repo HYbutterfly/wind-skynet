@@ -1,4 +1,4 @@
-local helper = require "ddz.helper"
+local util = {}
 
 local TYPE = {
 	dan = 1,
@@ -24,11 +24,11 @@ local function V(card)
 end
 
 
-helper.TYPE = TYPE
-helper.value = V
-helper.color = C
+util.TYPE = TYPE
+util.value = V
+util.color = C
 
-function helper.one_deck_cards()
+function util.one_deck_cards()
 	return {
 		0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d,
 		0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2a, 0x2b, 0x2c, 0x2d,
@@ -38,7 +38,7 @@ function helper.one_deck_cards()
 	}
 end
 
-function helper.shuffle(cards)
+function util.shuffle(cards)
 	return table.randsort(cards)
 end
 
@@ -50,7 +50,6 @@ local function find_first(cc)
 		end
 	end
 end
-
 
 local function is_shunzi(cc, len)
 	local first_v = find_first(cc)
@@ -68,7 +67,61 @@ end
 
 
 local function is_liandui(cc, len)
-	-- body
+	if len%2 ~= 0 then
+		return
+	end
+	local n = len//2
+	local first_v = find_first(cc)
+	for i=1,n do
+		if cc[first_v+i-1] ~= 2 then
+			return false
+		end
+	end
+	return TYPE.liandui, first_v, n
+end
+
+local function find_n(cc, number)
+	for v,n in pairs(cc) do
+		if n == number then
+			return v
+		end
+	end
+end
+
+
+local function count_n(cc, number)
+	local c = 0
+	for v,n in pairs(cc) do
+		if n == number then
+			c = c + 1
+		end
+	end
+	return c
+end
+
+local function is_sidaier_or_sidailiangdui(cc, len)
+	local bomb = find_n(cc, 4)
+	if not bomb then
+		return
+	end
+
+	if len == 6 then
+		return TYPE.sidaier, bomb
+	elseif len == 8 then
+		if count_n(cc, 2) == 2 then
+			return TYPE.sidailiangdui, bomb
+		end
+	end
+end
+
+local function is_feiji(cc, len)
+
+end
+
+local function is_sandaiyidui(cc, len)
+	if len == 5 and count_n(cc, 3) == 1 and count_n(cc, 2) == 1 then
+		return TYPE.sandaiyidui, find_n(cc, 3)
+	end
 end
 
 
@@ -84,11 +137,25 @@ end
 
 local function over4type(cards, len)
 	local cc = cards_count(cards)
-	return is_shunzi(cc, len) or is_liandui(cc, len)
+	
+	local funcs = {
+		is_sandaiyidui,
+		is_feiji,
+		is_shunzi,
+		is_liandui,
+		is_sidaier_or_sidailiangdui,
+	}
+
+	for i,f in ipairs(funcs) do
+		local t, w, l = f(cc, len)
+		if t then
+			return t, w, l
+		end
+	end
 end
 
 
-function helper.type(_cards)
+function util.type(_cards)
 	local cards = {}
 	for i,v in ipairs(_cards) do
 		cards[i] = v
@@ -140,4 +207,4 @@ function helper.type(_cards)
 end
 
 
-return helper
+return util

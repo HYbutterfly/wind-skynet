@@ -1,11 +1,11 @@
 local skynet = require "skynet"
-local helper = require "ddz.helper.game"
+local util = require "ddz.util"
 
 local room = {}
 
 
 function room:gamestart()
-	local pool = helper.shuffle(helper.one_deck_cards())
+	local pool = util.shuffle(util.one_deck_cards())
 	for i,u in ipairs(self.users) do
 		u.game.status = "waiting"
 		u.game.hand = table.splice(pool, 1, 17)
