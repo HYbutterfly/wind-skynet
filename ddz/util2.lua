@@ -43,6 +43,27 @@ function util.shuffle(cards)
 end
 
 
+local function cards_count(cards)
+	local count = {}			-- value: count
+	local maxc = 0 				-- max count 
+	local maxc_values = {} 		-- 达到maxc 的 value list
+
+	for _,card in ipairs(cards) do
+		local v = V(card)
+		count[v] = (count[v] or 0) + 1
+		if maxc < count[v] then
+			maxc = count[v]
+		end
+	end
+
+	for v,c in pairs(count) do
+		if c == maxc then
+			maxc_values[#maxc_values+1] = v
+		end
+	end
+	return count, maxc, maxc_values
+end
+
 local function find_first(cc)
 	for i=1,0xf do
 		if cc[i] then
@@ -53,7 +74,7 @@ end
 
 local function is_shunzi(cc, len)
 	local first_v = find_first(cc)
-	if first_v > 0x8 then
+	if first_v+len-1 > 0xc then
 		return false
 	end
 
@@ -65,13 +86,16 @@ local function is_shunzi(cc, len)
 	return TYPE.shunzi, first_v, len
 end
 
-
 local function is_liandui(cc, len)
 	if len%2 ~= 0 then
-		return
+		return false
 	end
 	local n = len//2
 	local first_v = find_first(cc)
+	if first_v+n-1 > 0xc then
+		return false
+	end
+
 	for i=1,n do
 		if cc[first_v+i-1] ~= 2 then
 			return false
@@ -80,102 +104,21 @@ local function is_liandui(cc, len)
 	return TYPE.liandui, first_v, n
 end
 
-local function find_n(cc, number)
-	for v,n in pairs(cc) do
-		if n == number then
-			return v
-		end
-	end
-end
-
-
-local function count_n(cc, number)
-	local c = 0
-	for v,n in pairs(cc) do
-		if n == number then
-			c = c + 1
-		end
-	end
-	return c
-end
-
-local function is_sidaier_or_sidailiangdui(cc, len)
-	local bomb = find_n(cc, 4)
-	if not bomb then
-		return
-	end
-
-	if len == 6 then
-		return TYPE.sidaier, bomb
-	elseif len == 8 then
-		if count_n(cc, 2) == 2 then
-			return TYPE.sidailiangdui, bomb
-		end
-	end
-end
-
--- feiji start --------------------------------------------------
-local function onlyfeiji(cc, len)
-	if len%3 ~= 0 then
-		return
-	end
-
-	local first_v = find_first(cc)
-	local n = len/3
-
-	if first_v+n-1 >= 0xd then
-		return
-	end
-
-	local v
-	for i=1,n do
-		v = first_v+i-1
-		if cc[v] ~= 3 then
-			return
-		end
-	end
-	return true
-end
-
-local function is_feiji(cc, len)
-	if len < 6 then
-		return
-	end
-end
-
-local function is_sandaiyidui(cc, len)
-	if len == 5 and count_n(cc, 3) == 1 and count_n(cc, 2) == 1 then
-		return TYPE.sandaiyidui, find_n(cc, 3)
-	end
-end
-
-
-local function cards_count(cards)
-	local count = {}
-	for i,card in ipairs(cards) do
-		local v = V(card)
-		count[v] = (count[v] or 0) + 1
-	end
-	return count
-end
-
-
 local function over4type(cards, len)
-	local cc = cards_count(cards)
-	
-	local funcs = {
-		is_sandaiyidui,
-		is_feiji,
-		is_shunzi,
-		is_liandui,
-		is_sidaier_or_sidailiangdui,
-	}
-
-	for i,f in ipairs(funcs) do
-		local t, w, l = f(cc, len)
-		if t then
-			return t, w, l
+	local cc, maxc, maxc_values = cards_count(cards)
+	if maxc == 4 then 		-- 四带二, 四带两队
+		if len == 6 then
+			return TYPE.sidaier, maxc_values[1]
+		elseif len == 8 then
+			-- TODO
 		end
+	elseif maxc == 3 then 	-- 三带一对, 飞机不带, 飞机带单, 飞机带对
+
+	elseif maxc == 2 then
+		return is_liandui(cc, len)
+	else
+		assert(maxc == 1)
+		return is_shunzi(cc, len)
 	end
 end
 
@@ -215,21 +158,20 @@ function util.type(_cards)
 		local v3 = V(cards[3])
 		local v4 = V(cards[4])
 
-		if v1 == v2 and v2 == v3 then
-			if v3 == v4 then
-				return TYPE.zhadan, v1
+		if v2 == v3 then
+			if v1 == v2 then
+				if v3 == v4 then
+					return TYPE.zhadan, v1
+				else
+					return TYPE.sandaiyi, v1
+				end
 			else
-				return TYPE.sandaiyi, v1
-			end
-		else
-			if v2 == v3 and v3 == v4 then
-				return TYPE.sandaiyi, v2
+				if v3 == v4 then
+					return TYPE.sandaiyi, v2
+				end
 			end
 		end
 	else
 		return over4type(cards, len)
 	end
 end
-
-
-return util
